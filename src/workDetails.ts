@@ -48,6 +48,14 @@ export const WORK_DETAILS: WorkDetail[] = [
     description: '精选主材与软装，让材质、色彩和预算保持统一。',
     imageStart: 24,
   },
+  {
+    id: 'completed',
+    path: '/work/completed',
+    title: '完工照片',
+    eyebrow: '06 / COMPLETED',
+    description: '记录项目完成后的空间状态与实际使用效果。',
+    imageStart: 30,
+  },
 ]
 
 export const WORK_ITEMS = WORK_DETAILS.map((item) => item.title)
