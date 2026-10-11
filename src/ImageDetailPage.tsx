@@ -6,12 +6,14 @@ import Masonry from './Masonry'
 type ImageDetailPageProps = {
   images: { image: string; full?: string; text: string }[]
   masonryHeights?: number[]
+  aspectRatio?: number
   onBack: () => void
 }
 
 export default function ImageDetailPage({
   images,
   masonryHeights,
+  aspectRatio = 4 / 3,
   onBack,
 }: ImageDetailPageProps) {
   const [activeIndex, setActiveIndex] = useState<number | null>(null)
@@ -34,10 +36,10 @@ export default function ImageDetailPage({
           autoHeight
           animateFrom="bottom"
           blurToFocus
-          stagger={0.08}
+          stagger={0.06}
           scaleOnHover
           hoverScale={0.95}
-          aspectRatio={masonryHeights ? undefined : 4 / 3}
+          aspectRatio={masonryHeights ? undefined : aspectRatio}
           onItemClick={(item) => {
             const index = Number(String((item as { id?: string }).id ?? '').replace('masonry-', ''))
             setActiveIndex(Number.isFinite(index) ? index : 0)
@@ -77,13 +79,13 @@ export default function ImageDetailPage({
           >
             <ArrowLeft size={20} />
           </button>
-          <div className="max-w-5xl text-center">
+          <div className="flex h-full w-full flex-col items-center justify-center gap-4 px-12 sm:px-20">
             <img
               src={images[activeIndex].full ?? images[activeIndex].image}
               alt={images[activeIndex].text}
-              className="mx-auto max-h-[76vh] max-w-[92vw] rounded-lg object-contain shadow-2xl w-auto h-auto"
+              className="block max-h-[72vh] max-w-full rounded-lg object-contain shadow-2xl"
             />
-            <p className="mt-4 text-sm font-medium text-white/80">
+            <p className="text-center text-sm font-medium text-white/80">
               {images[activeIndex].text}
             </p>
           </div>

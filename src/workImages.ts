@@ -15,6 +15,7 @@ const thumbModules = import.meta.glob('./assets/work-thumbs/*/*.webp', {
 export type WorkImage = {
   full: string
   thumb: string
+  name: string
 }
 
 export const WORK_IMAGES: Record<string, WorkImage[]> = Object.entries(
@@ -24,9 +25,11 @@ export const WORK_IMAGES: Record<string, WorkImage[]> = Object.entries(
   .reduce<Record<string, WorkImage[]>>((acc, [path, full]) => {
     const rel = path.replace('./assets/work/', '')
     const id = rel.split('/')[0]
+    const file = rel.split('/').slice(1).join('/')
     const thumb = thumbModules[`./assets/work-thumbs/${rel}`] ?? full
+    const name = file.replace(/\.[^.]+$/, '')
 
     acc[id] = acc[id] ?? []
-    acc[id].push({ full, thumb })
+    acc[id].push({ full, thumb, name })
     return acc
   }, {})
