@@ -1,5 +1,6 @@
 import { PROJECT_FOLDERS } from './projectStructure'
 import { albumCover } from './projectImages'
+import { projectCoverUrl } from './projectCovers'
 
 export type ProjectDetail = {
   id: string
@@ -48,7 +49,10 @@ export const PROJECT_FOLDER_BY_ID = PROJECT_FOLDERS.reduce<
 }, {})
 
 export const PROJECT_ACCORDION_ITEMS = PROJECT_FOLDERS.map((folder) => ({
-  image: albumCover(folder.albums[0] ?? { title: '', groups: [] }),
+  image: projectCoverUrl(
+    folder.id,
+    albumCover(folder.albums[0] ?? { title: '', groups: [] }),
+  ),
   label: folder.title,
   link: undefined,
 }))
