@@ -4,22 +4,23 @@ import HorizontalGallery from './HorizontalGallery'
 import ImageDetailPage from './ImageDetailPage'
 import { albumCover, groupCover, resolveProjectImages } from './projectImages'
 import { projectAlbumCoverUrl } from './projectAlbumCovers'
-import { PROJECT_FOLDER_BY_ID } from './projectDetails'
-import type { ProjectDetail } from './projectDetails'
+import { PROJECT_DETAILS, PROJECT_FOLDER_BY_ID } from './projectDetails'
 
 type ProjectDetailPageProps = {
-  detail: ProjectDetail
+  path: string
   onBack: () => void
 }
 
 export default function ProjectDetailPage({
-  detail,
+  path,
   onBack,
 }: ProjectDetailPageProps) {
   const [albumIndex, setAlbumIndex] = useState<number | null>(null)
   const [groupIndex, setGroupIndex] = useState<number | null>(null)
 
-  const albums = PROJECT_FOLDER_BY_ID[detail.id]?.albums ?? []
+  const detail = PROJECT_DETAILS.find((item) => item.path === path) ?? null
+  const projectId = detail?.id ?? ''
+  const albums = PROJECT_FOLDER_BY_ID[projectId]?.albums ?? []
   const album = albumIndex === null ? null : albums[albumIndex] ?? null
   const hasGroupLevel = (album?.groups.length ?? 0) > 1
   const group = album
@@ -29,10 +30,10 @@ export default function ProjectDetailPage({
   const albumItems = useMemo(
     () =>
       albums.map((entry, index) => ({
-        image: projectAlbumCoverUrl(detail.id, index, albumCover(entry)),
+        image: projectAlbumCoverUrl(projectId, index, albumCover(entry)),
         text: entry.title,
       })),
-    [albums, detail.id],
+    [albums, projectId],
   )
 
   const groupItems = useMemo(
@@ -48,6 +49,8 @@ export default function ProjectDetailPage({
     () => (group ? resolveProjectImages(group.images) : []),
     [group],
   )
+
+  if (!detail) return null
 
   if (album && group) {
     return (

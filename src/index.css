@@ -144,16 +144,55 @@ html {
 @keyframes pageIn {
   0% {
     opacity: 0;
-    transform: scale(1.015);
   }
   100% {
     opacity: 1;
-    transform: scale(1);
   }
 }
 
 .page-enter {
-  animation: pageIn 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: pageIn 0.32s ease-out both;
+  backface-visibility: hidden;
+}
+
+.route-fade {
+  will-change: opacity;
+}
+
+.reveal-layer {
+  --spot-x: 50%;
+  --spot-y: 42%;
+  --spot-r: 260px;
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  pointer-events: none;
+  transform: translateZ(0);
+  background-position: center center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  -webkit-mask-image: radial-gradient(
+    circle var(--spot-r) at var(--spot-x) var(--spot-y),
+    #ffffff 0%,
+    #ffffff 40%,
+    rgba(255, 255, 255, 0.75) 60%,
+    rgba(255, 255, 255, 0.4) 75%,
+    rgba(255, 255, 255, 0.12) 88%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  mask-image: radial-gradient(
+    circle var(--spot-r) at var(--spot-x) var(--spot-y),
+    #ffffff 0%,
+    #ffffff 40%,
+    rgba(255, 255, 255, 0.75) 60%,
+    rgba(255, 255, 255, 0.4) 75%,
+    rgba(255, 255, 255, 0.12) 88%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
 }
 
 @media (prefers-reduced-motion: reduce) {

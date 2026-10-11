@@ -1,83 +1,84 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 
 const SPOTLIGHT_R = 260
 
 type RevealLayerProps = {
   image: string
-  cursorX: number
-  cursorY: number
+  radius?: number
 }
 
-export default function RevealLayer({ image, cursorX, cursorY }: RevealLayerProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
+export default function RevealLayer({
+  image,
+  radius = SPOTLIGHT_R,
+}: RevealLayerProps) {
   const revealRef = useRef<HTMLDivElement>(null)
-  const [canvasSize, setCanvasSize] = useState({
-    width: window.innerWidth,
-    height: window.innerHeight,
-  })
 
   useEffect(() => {
-    const handleResize = () => {
-      setCanvasSize({
-        width: window.innerWidth,
-        height: window.innerHeight,
-      })
+    const el = revealRef.current
+    if (!el) return
+
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+    const target = { x: window.innerWidth / 2, y: window.innerHeight * 0.42 }
+    const pos = { x: target.x, y: target.y }
+    let raf: number | null = null
+
+    const apply = () => {
+      el.style.setProperty('--spot-x', `${pos.x.toFixed(1)}px`)
+      el.style.setProperty('--spot-y', `${pos.y.toFixed(1)}px`)
     }
 
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [])
+    el.style.setProperty('--spot-r', `${radius}px`)
+    apply()
 
-  useLayoutEffect(() => {
-    const canvas = canvasRef.current
-    const reveal = revealRef.current
-    if (!canvas || !reveal) return
+    if (reduced) {
+      el.style.setProperty('--spot-x', '50%')
+      el.style.setProperty('--spot-y', '42%')
+      return
+    }
 
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
+    const loop = () => {
+      const dx = target.x - pos.x
+      const dy = target.y - pos.y
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
-    const gradient = ctx.createRadialGradient(
-      cursorX,
-      cursorY,
-      0,
-      cursorX,
-      cursorY,
-      SPOTLIGHT_R,
-    )
-    gradient.addColorStop(0, 'rgba(255,255,255,1)')
-    gradient.addColorStop(0.4, 'rgba(255,255,255,1)')
-    gradient.addColorStop(0.6, 'rgba(255,255,255,0.75)')
-    gradient.addColorStop(0.75, 'rgba(255,255,255,0.4)')
-    gradient.addColorStop(0.88, 'rgba(255,255,255,0.12)')
-    gradient.addColorStop(1, 'rgba(255,255,255,0)')
+      if (Math.abs(dx) < 0.35 && Math.abs(dy) < 0.35) {
+        pos.x = target.x
+        pos.y = target.y
+        apply()
+        raf = null
+        return
+      }
 
-    ctx.fillStyle = gradient
-    ctx.beginPath()
-    ctx.arc(cursorX, cursorY, SPOTLIGHT_R, 0, Math.PI * 2)
-    ctx.fill()
+      pos.x += dx * 0.14
+      pos.y += dy * 0.14
+      apply()
+      raf = window.requestAnimationFrame(loop)
+    }
 
-    const dataUrl = canvas.toDataURL()
-    const maskImage = `url("${dataUrl}")`
-    reveal.style.webkitMaskImage = maskImage
-    reveal.style.maskImage = maskImage
-    reveal.style.maskSize = '100% 100%'
-  }, [cursorX, cursorY])
+    const kick = () => {
+      if (raf === null) raf = window.requestAnimationFrame(loop)
+    }
+
+    const handlePointerMove = (event: PointerEvent) => {
+      target.x = event.clientX
+      target.y = event.clientY
+      kick()
+    }
+
+    window.addEventListener('pointermove', handlePointerMove, { passive: true })
+
+    return () => {
+      window.removeEventListener('pointermove', handlePointerMove)
+      if (raf !== null) window.cancelAnimationFrame(raf)
+      raf = null
+    }
+  }, [radius])
 
   return (
-    <>
-      <canvas
-        ref={canvasRef}
-        width={canvasSize.width}
-        height={canvasSize.height}
-        className="pointer-events-none absolute inset-0"
-        style={{ display: 'none' }}
-      />
-      <div
-        ref={revealRef}
-        className="pointer-events-none absolute inset-0 z-30 bg-center bg-cover bg-no-repeat"
-        style={{ backgroundImage: `url(${image})` }}
-      />
-    </>
+    <div
+      ref={revealRef}
+      className="reveal-layer"
+      style={{ backgroundImage: `url(${image})` }}
+    />
   )
 }

@@ -1,16 +1,25 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { Suspense, lazy, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { Menu, X } from 'lucide-react'
 import RevealLayer from './RevealLayer'
-import DetailPage from './DetailPage'
-import SectionPage from './SectionPage'
-import ProjectDetailPage from './ProjectDetailPage'
-import WorkDetailPage from './WorkDetailPage'
 import { BG_IMAGE_1, BG_IMAGE_2, SITES } from './strata'
-import { PROJECT_DETAILS } from './projectDetails'
+import { PROJECT_ROUTE_PATHS, isProjectRoute } from './projectRoutes'
 import { WORK_DETAILS } from './workDetails'
+import {
+  loadDetailPage,
+  loadProjectDetailPage,
+  loadSectionPage,
+  loadWorkDetailPage,
+  prefetchRoute,
+  prefetchWhenIdle,
+} from './routeChunks'
 import logo from './assets/logo.jpg'
+
+const SectionPage = lazy(loadSectionPage)
+const ProjectDetailPage = lazy(loadProjectDetailPage)
+const WorkDetailPage = lazy(loadWorkDetailPage)
+const DetailPage = lazy(loadDetailPage)
 
 const SPOTLIGHT_R = 260
 
@@ -68,18 +77,10 @@ const NAV_ITEMS: NavItem[] = [
   },
 ]
 
-type CursorPos = {
-  x: number
-  y: number
-}
-
 export default function App() {
   const rootRef = useRef<HTMLDivElement>(null)
   const openedOnce = useRef(false)
-  const mouse = useRef<CursorPos>({ x: -999, y: -999 })
-  const smooth = useRef<CursorPos>({ x: -999, y: -999 })
-  const rafRef = useRef<number | null>(null)
-  const [cursorPos, setCursorPos] = useState<CursorPos>({ x: -999, y: -999 })
+  const transitionTimers = useRef<number[]>([])
   const [mobileOpen, setMobileOpen] = useState(false)
   const [transitioning, setTransitioning] = useState(false)
   const transitionRef = useRef(false)
@@ -92,22 +93,26 @@ export default function App() {
   const performNavigation = (to: string) => {
     setMobileOpen(false)
     if (to === route) {
-      setRoute(to)
       window.scrollTo({ top: 0, behavior: 'instant' })
       return
     }
     if (transitionRef.current) return
 
+    prefetchRoute(to)
     transitionRef.current = true
     setTransitioning(true)
-    window.setTimeout(() => {
-      window.location.hash = to
-      window.scrollTo({ top: 0, behavior: 'instant' })
+    transitionTimers.current.push(
       window.setTimeout(() => {
-        setTransitioning(false)
-        transitionRef.current = false
-      }, 110)
-    }, 110)
+        window.location.hash = to
+        window.scrollTo({ top: 0, behavior: 'instant' })
+        transitionTimers.current.push(
+          window.setTimeout(() => {
+            setTransitioning(false)
+            transitionRef.current = false
+          }, 140),
+        )
+      }, 90),
+    )
   }
 
   const navigate = (to: string, requireDoubleClick = false) => {
@@ -126,31 +131,20 @@ export default function App() {
 
   const navigateNext = (to: string) => navigate(to, true)
 
+  useEffect(
+    () => () => {
+      transitionTimers.current.forEach((id) => window.clearTimeout(id))
+      transitionTimers.current = []
+    },
+    [],
+  )
+
   useEffect(() => {
-    if (route !== '/') return
-
-    const handleMouseMove = (event: MouseEvent) => {
-      mouse.current.x = event.clientX
-      mouse.current.y = event.clientY
-    }
-
-    const animate = () => {
-      smooth.current.x += (mouse.current.x - smooth.current.x) * 0.1
-      smooth.current.y += (mouse.current.y - smooth.current.y) * 0.1
-      setCursorPos({ x: smooth.current.x, y: smooth.current.y })
-      rafRef.current = window.requestAnimationFrame(animate)
-    }
-
-    window.addEventListener('mousemove', handleMouseMove)
-    rafRef.current = window.requestAnimationFrame(animate)
-
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove)
-      if (rafRef.current !== null) {
-        window.cancelAnimationFrame(rafRef.current)
-      }
-    }
-  }, [route])
+    prefetchWhenIdle(() => {
+      void loadSectionPage()
+      void loadDetailPage()
+    }, 2000)
+  }, [])
 
   useEffect(() => {
     const handleHashChange = () => {
@@ -167,11 +161,7 @@ export default function App() {
     ? SITES.findIndex((site) => site.id === route.replace('/site/', ''))
     : -1
   const activeSite = activeSiteIndex >= 0 ? SITES[activeSiteIndex] : null
-  const activeProjectIndex = PROJECT_DETAILS.findIndex(
-    (item) => item.path === route,
-  )
-  const activeProject =
-    activeProjectIndex >= 0 ? PROJECT_DETAILS[activeProjectIndex] : null
+  const activeProject = isProjectRoute(route)
   const activeWorkIndex = WORK_DETAILS.findIndex((item) => item.path === route)
   const activeWork = activeWorkIndex >= 0 ? WORK_DETAILS[activeWorkIndex] : null
   const activeNavIndex = NAV_ITEMS.findIndex((item) => item.path === route)
@@ -261,7 +251,7 @@ export default function App() {
       style={{ fontFamily: "'Inter', sans-serif" }}
     >
         <div
-          className={`pointer-events-none fixed inset-0 z-[300] bg-[#080908] transition-opacity duration-100 ${
+          className={`route-fade pointer-events-none fixed inset-0 z-[300] bg-[#080908] transition-opacity duration-150 ${
             transitioning ? 'opacity-100' : 'opacity-0'
           }`}
           aria-hidden="true"
@@ -281,6 +271,8 @@ export default function App() {
             <button
               key={item.path}
               onClick={() => navigate(item.path)}
+              onMouseEnter={() => prefetchRoute(item.path)}
+              onFocus={() => prefetchRoute(item.path)}
               className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors hover:bg-white/20 hover:text-white ${
                 route === item.path ? 'bg-white/20 text-white' : 'text-white/80'
               }`}
@@ -315,11 +307,9 @@ export default function App() {
         </div>
       )}
 
+      <Suspense fallback={<div className="min-h-screen w-full bg-[#080908]" />}>
       {activeProject ? (
-        <ProjectDetailPage
-          detail={activeProject}
-          onBack={() => navigate('/projects')}
-        />
+        <ProjectDetailPage path={route} onBack={() => navigate('/projects')} />
       ) : activeWork ? (
         <WorkDetailPage detail={activeWork} onBack={() => navigate('/work')} />
       ) : activeSite ? (
@@ -353,8 +343,8 @@ export default function App() {
             navigateNext(target ? target.path : '/work')
           }}
           onProjectClick={(index) => {
-            const target = PROJECT_DETAILS[index]
-            navigateNext(target ? target.path : '/projects')
+            const target = PROJECT_ROUTE_PATHS[index]
+            navigateNext(target ?? '/projects')
           }}
           onBack={() => navigate('/')}
           onNext={() =>
@@ -375,7 +365,7 @@ export default function App() {
             style={{ backgroundImage: `url(${BG_IMAGE_1})` }}
           />
 
-          <RevealLayer image={BG_IMAGE_2} cursorX={cursorPos.x} cursorY={cursorPos.y} />
+          <RevealLayer image={BG_IMAGE_2} radius={SPOTLIGHT_R} />
 
           <div
             className="hero-intro-mask pointer-events-none absolute inset-0 z-[80] bg-[#0a0b0a]"
@@ -397,6 +387,7 @@ export default function App() {
 
         </>
       )}
+      </Suspense>
     </div>
   )
 }

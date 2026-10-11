@@ -185,7 +185,13 @@ export default function HorizontalGallery({
             aria-label={item.text}
           >
             <span className="horizontal-gallery__media">
-              <img src={item.image} alt={item.text} draggable={false} />
+              <img
+                src={item.image}
+                alt={item.text}
+                draggable={false}
+                loading="lazy"
+                decoding="async"
+              />
             </span>
             <span className="horizontal-gallery__caption">{item.text}</span>
           </button>

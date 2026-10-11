@@ -1,16 +1,26 @@
 import { ArrowLeft, ArrowRight, X } from 'lucide-react'
-import { useMemo, useState } from 'react'
-import DriftWall from './DriftWall'
-import HorizontalGallery from './HorizontalGallery'
-import Lanyard from './Lanyard'
+import { Suspense, lazy, useEffect, useState } from 'react'
 import LineSidebar from './LineSidebar'
-import ProfileCard from './ProfileCard'
 import StrataImage from './StrataImage'
 import { LIFE_WALL_ITEMS, LIFE_WALL_THUMBS } from './lifeImages'
-import { PROJECT_ACCORDION_ITEMS } from './projectDetails'
+import {
+  loadDriftWall,
+  loadImageDetailPage,
+  loadLanyard,
+  loadProfileCard,
+  loadProjectAccordion,
+  loadProjectDetailPage,
+  loadWorkDetailPage,
+  prefetchWhenIdle,
+} from './routeChunks'
 import cardFront from './assets/card-front.jpg'
 import contactAvatar from './assets/contact-avatar.jpg'
 import { WORK_ITEMS } from './workDetails'
+
+const DriftWall = lazy(loadDriftWall)
+const Lanyard = lazy(loadLanyard)
+const ProfileCard = lazy(loadProfileCard)
+const ProjectAccordion = lazy(loadProjectAccordion)
 
 const BLANK_CARD_IMAGE =
   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGPg4uYCAABCACAfLCVSAAAAAElFTkSuQmCC'
@@ -57,82 +67,94 @@ export default function SectionPage({
   onNext,
 }: SectionPageProps) {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
-  const projectGalleryItems = useMemo(
-    () =>
-      PROJECT_ACCORDION_ITEMS.map((item) => ({
-        image: item.image,
-        text: item.label,
-      })),
-    [],
-  )
+
+  useEffect(() => {
+    if (lineSidebar) {
+      prefetchWhenIdle(() => {
+        void loadWorkDetailPage()
+        void loadImageDetailPage()
+      })
+    }
+    if (accordion) {
+      prefetchWhenIdle(() => {
+        void loadProjectDetailPage()
+        void loadImageDetailPage()
+      })
+    }
+  }, [lineSidebar, accordion])
 
   return (
     <>
     <main className="page-enter relative min-h-screen overflow-hidden bg-[#080908]">
       {lanyard ? (
         <div className="absolute inset-y-0 left-0 z-0 w-[64%] max-w-[760px] sm:w-[58%] md:w-[52%]">
-          <Lanyard
-            position={LANYARD_POSITION}
-            fov={19}
-            gravity={LANYARD_GRAVITY}
-            cardScale={1.22}
-            offset={LANYARD_OFFSET}
-            frontImage={cardFront}
-            lanyardImage={BLANK_CARD_IMAGE}
-          />
+          <Suspense fallback={null}>
+            <Lanyard
+              position={LANYARD_POSITION}
+              fov={19}
+              gravity={LANYARD_GRAVITY}
+              cardScale={1.22}
+              offset={LANYARD_OFFSET}
+              frontImage={cardFront}
+              lanyardImage={BLANK_CARD_IMAGE}
+            />
+          </Suspense>
         </div>
       ) : profileCard ? (
         <div className="absolute inset-0 z-0 flex items-center justify-center px-6 pb-14 pt-28">
-          <ProfileCard
-            className="pc-card--flat"
-            avatarUrl={contactAvatar}
-            miniAvatarUrl={contactAvatar}
-            name=""
-            title=""
-            handle=""
-            status=""
-            contactText=""
-            showUserInfo={false}
-            showEffects={false}
-            enableTilt={false}
-            behindGlowEnabled={false}
-            onContactClick={() => {}}
-          />
+          <Suspense fallback={null}>
+            <ProfileCard
+              className="pc-card--flat"
+              avatarUrl={contactAvatar}
+              miniAvatarUrl={contactAvatar}
+              name=""
+              title=""
+              handle=""
+              status=""
+              contactText=""
+              showUserInfo={false}
+              showEffects={false}
+              enableTilt={false}
+              behindGlowEnabled={false}
+              onContactClick={() => {}}
+            />
+          </Suspense>
         </div>
       ) : accordion ? (
         <div className="absolute inset-0 z-0">
-          <HorizontalGallery
-            items={projectGalleryItems}
-            onImageClick={(index) => onProjectClick?.(index)}
-          />
+          <Suspense fallback={null}>
+            <ProjectAccordion onImageClick={(index) => onProjectClick?.(index)} />
+          </Suspense>
         </div>
       ) : dynamic ? (
         <div className="absolute inset-0 z-0">
-          <DriftWall
-            items={LIFE_WALL_THUMBS}
-            onTileOpen={(item: { image: string; title: string; href?: string }) => {
-              const index = LIFE_WALL_ITEMS.findIndex(
-                (entry) => entry.title === item.title,
-              )
-              setLightboxIndex(index >= 0 ? index : 0)
-            }}
-            columns={6}
-            tileWidth={180}
-            tileHeight={120}
-            gap={14}
-            tilt={16}
-            turn={-14}
-            perspective={1200}
-            depth={120}
-            speed={34}
-            direction="up"
-            variance={0.45}
-            parallax={0.5}
-            lift={64}
-            fade={0.6}
-            dim={0.55}
-            overlayColor="#060010"
-          />
+          <Suspense fallback={null}>
+            <DriftWall
+              items={LIFE_WALL_THUMBS}
+              onTileOpen={(item: { image: string; title: string; href?: string }) => {
+                const index = LIFE_WALL_ITEMS.findIndex(
+                  (entry) => entry.title === item.title,
+                )
+                setLightboxIndex(index >= 0 ? index : 0)
+              }}
+              columns={6}
+              tileWidth={180}
+              tileHeight={120}
+              gap={14}
+              tilt={16}
+              turn={-14}
+              perspective={1200}
+              depth={120}
+              speed={34}
+              direction="up"
+              variance={0.45}
+              parallax={0.5}
+              lift={64}
+              fade={0.6}
+              dim={0.55}
+              overlayColor="#060010"
+            />
+          </Suspense>
         </div>
       ) : (
         <StrataImage
