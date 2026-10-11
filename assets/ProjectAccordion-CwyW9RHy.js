@@ -1,0 +1,1 @@
+import{r as a,j as e}from"./vendor-react-BU8tP2lG.js";import{c as s,H as m}from"./projectDetails-C0L34Nt3.js";import"./vendor-icons-BjWZuhJ1.js";function p({onImageClick:r}){const t=a.useMemo(()=>s.map(o=>({image:o.image,text:o.label})),[]);return e.jsx(m,{items:t,onImageClick:r})}export{p as default};
