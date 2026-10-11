@@ -67,6 +67,7 @@ type MasonryProps = {
   blurToFocus?: boolean
   colorShiftOnHover?: boolean
   aspectRatio?: number
+  autoHeight?: boolean
   onItemClick?: (item: unknown) => void
 }
 
@@ -81,6 +82,7 @@ function Masonry({
   blurToFocus = true,
   colorShiftOnHover = false,
   aspectRatio,
+  autoHeight = false,
   onItemClick,
 }: MasonryProps) {
   const columns = useMedia(
@@ -192,6 +194,16 @@ function Masonry({
     hasMounted.current = true
   }, [grid, imagesReady, stagger, animateFrom, blurToFocus, duration, ease])
 
+  useLayoutEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    if (!autoHeight) {
+      el.style.height = ''
+      return
+    }
+    const total = grid.reduce((max, item) => Math.max(max, item.y + item.h), 0)
+    el.style.height = total ? `${Math.ceil(total)}px` : '100%'
+  }, [autoHeight, grid])
   const handleMouseEnter = (e, item) => {
     const element = e.currentTarget
     const selector = `[data-key="${item.id}"]`

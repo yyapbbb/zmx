@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom'
 import Masonry from './Masonry'
 
 type ImageDetailPageProps = {
-  images: { image: string; text: string }[]
+  images: { image: string; full?: string; text: string }[]
   masonryHeights?: number[]
   onBack: () => void
 }
@@ -28,9 +28,10 @@ export default function ImageDetailPage({
 
   return (
     <main className="page-enter relative min-h-screen overflow-hidden bg-[#080908]">
-      <div className="absolute inset-x-0 bottom-0 top-24 z-0">
+      <div className="absolute inset-x-0 bottom-0 top-24 z-0 overflow-y-auto overflow-x-hidden">
         <Masonry
           items={items}
+          autoHeight
           animateFrom="bottom"
           blurToFocus
           stagger={0.08}
@@ -78,7 +79,7 @@ export default function ImageDetailPage({
           </button>
           <div className="max-w-5xl text-center">
             <img
-              src={images[activeIndex].image}
+              src={images[activeIndex].full ?? images[activeIndex].image}
               alt={images[activeIndex].text}
               className="mx-auto max-h-[76vh] max-w-[92vw] rounded-lg object-contain shadow-2xl w-auto h-auto"
             />
