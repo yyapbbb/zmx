@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react'
 import HorizontalGallery from './HorizontalGallery'
 import ImageDetailPage from './ImageDetailPage'
 import { albumCover, groupCover, resolveProjectImages } from './projectImages'
+import { projectAlbumCoverUrl } from './projectAlbumCovers'
 import { PROJECT_FOLDER_BY_ID } from './projectDetails'
 import type { ProjectDetail } from './projectDetails'
 
@@ -27,11 +28,11 @@ export default function ProjectDetailPage({
 
   const albumItems = useMemo(
     () =>
-      albums.map((entry) => ({
-        image: albumCover(entry),
+      albums.map((entry, index) => ({
+        image: projectAlbumCoverUrl(detail.id, index, albumCover(entry)),
         text: entry.title,
       })),
-    [albums],
+    [albums, detail.id],
   )
 
   const groupItems = useMemo(
