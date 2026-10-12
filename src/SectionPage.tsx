@@ -17,6 +17,22 @@ import cardFront from './assets/card-front.jpg'
 import contactAvatar from './assets/contact-avatar.jpg'
 import { WORK_ITEMS } from './workDetails'
 
+const ABOUT_FACTS = [
+  '姓名：钟美兴',
+  '职业：室内设计师',
+  '学历：广东生态工程职业学院（大专）',
+  '专业：环境艺术设计专业',
+]
+
+const ABOUT_INTRO = [
+  '简介：本人性格热情开朗，对设计冲满热情和喜欢.待人友好，为人真诚谦虚',
+  '　　　能吃苦耐劳，尽职尽责，有耐心，善于与人沟通，诚恳勤奋好学脚踏实地',
+  '　　　工作积极进取，在完成工作过程中和同事一起共同进退解决问题，团队配和精神强',
+  '　　　适应能力强,态度认真，抗压能力强',
+  '　　　有自己的独立思考',
+  '　　　（把空间设计成私人化）',
+]
+
 const DriftWall = lazy(loadDriftWall)
 const Lanyard = lazy(loadLanyard)
 const ProfileCard = lazy(loadProfileCard)
@@ -166,6 +182,20 @@ export default function SectionPage({
         />
       )}
       <div className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-t from-black via-black/45 to-black/15" />
+      {lanyard && (
+        <div className="pointer-events-none absolute left-[38.5%] top-[26.5%] z-[5] hidden md:block">
+          <div className="text-[clamp(14px,1.06vw,34px)] leading-[3.45] text-white">
+            {ABOUT_FACTS.map((line) => (
+              <p key={line}>{line}</p>
+            ))}
+          </div>
+          <div className="mt-[0.89em] text-[clamp(14px,1.06vw,34px)] leading-[1.725] text-white">
+            {ABOUT_INTRO.map((line) => (
+              <p key={line}>{line}</p>
+            ))}
+          </div>
+        </div>
+      )}
       {lineSidebar && (
         <div className="pointer-events-auto absolute right-4 top-1/2 z-20 -translate-y-1/2 sm:right-8 md:right-14 lg:right-20">
           <LineSidebar
