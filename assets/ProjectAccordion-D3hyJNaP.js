@@ -1,0 +1,1 @@
+import{r as e,j as a}from"./vendor-react-BU8tP2lG.js";import{c as s,H as m}from"./projectDetails-DB04H-fW.js";import"./vendor-icons-BjWZuhJ1.js";function n({onImageClick:o}){const r=e.useMemo(()=>s.map(t=>({image:t.image,text:t.label})),[]);return a.jsx(m,{items:r,stateKey:"projects",onImageClick:o})}export{n as default};
