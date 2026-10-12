@@ -11,11 +11,13 @@ type HorizontalGalleryItem = {
 
 type HorizontalGalleryProps = {
   items: HorizontalGalleryItem[]
+  stateKey?: string
   onImageClick?: (index: number, item: HorizontalGalleryItem) => void
 }
 
 export default function HorizontalGallery({
   items,
+  stateKey,
   onImageClick,
 }: HorizontalGalleryProps) {
   const trackRef = useRef<HTMLDivElement>(null)
@@ -31,6 +33,7 @@ export default function HorizontalGallery({
   const suppressTimerRef = useRef<number | null>(null)
   const [canGoPrevious, setCanGoPrevious] = useState(false)
   const [canGoNext, setCanGoNext] = useState(false)
+  const storageKey = stateKey ? `zmx-gallery-scroll:${stateKey}` : null
 
   const updateControls = useCallback(() => {
     const track = trackRef.current
@@ -81,6 +84,43 @@ export default function HorizontalGallery({
       resizeObserver.disconnect()
     }
   }, [updateControls])
+
+  useEffect(() => {
+    const track = trackRef.current
+    if (!track || !storageKey) return
+
+    let saved: number | null = null
+    try {
+      const raw = window.sessionStorage.getItem(storageKey)
+      const parsed = raw === null ? Number.NaN : Number(raw)
+      if (Number.isInteger(parsed) && parsed > 0) saved = parsed
+    } catch {
+      saved = null
+    }
+
+    if (saved === null) {
+      updateControls()
+      return
+    }
+
+    const savedIndex = saved
+    const apply = () => {
+      const card = track.children[savedIndex] as HTMLElement | undefined
+      if (!card) {
+        updateControls()
+        return
+      }
+      const centered =
+        card.offsetLeft - (track.clientWidth - card.offsetWidth) / 2
+      const maxScroll = Math.max(0, track.scrollWidth - track.clientWidth)
+      track.scrollLeft = Math.max(0, Math.min(centered, maxScroll))
+      updateControls()
+    }
+
+    apply()
+    const frame = window.requestAnimationFrame(apply)
+    return () => window.cancelAnimationFrame(frame)
+  }, [storageKey, updateControls])
 
   const handlePointerDown = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -149,9 +189,16 @@ export default function HorizontalGallery({
   const handleCardClick = useCallback(
     (index: number, item: HorizontalGalleryItem) => {
       if (suppressClickRef.current) return
+      if (storageKey) {
+        try {
+          window.sessionStorage.setItem(storageKey, String(index))
+        } catch {
+          // Ignore storage failures (private mode, blocked storage).
+        }
+      }
       onImageClick?.(index, item)
     },
-    [onImageClick],
+    [onImageClick, storageKey],
   )
 
   const moveByCard = useCallback((direction: -1 | 1) => {

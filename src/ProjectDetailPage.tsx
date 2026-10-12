@@ -76,6 +76,7 @@ export default function ProjectDetailPage({
       <div className="absolute inset-0 z-0">
         <HorizontalGallery
           items={items}
+          stateKey={`project-${projectId}-${showGroups ? 'groups' : 'albums'}`}
           onImageClick={(index) => {
             if (showGroups) {
               setGroupIndex(index)

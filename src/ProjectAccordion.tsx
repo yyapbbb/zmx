@@ -18,5 +18,11 @@ export default function ProjectAccordion({
     [],
   )
 
-  return <HorizontalGallery items={items} onImageClick={onImageClick} />
+  return (
+    <HorizontalGallery
+      items={items}
+      stateKey="projects"
+      onImageClick={onImageClick}
+    />
+  )
 }
