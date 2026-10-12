@@ -15,6 +15,7 @@ import {
   prefetchWhenIdle,
 } from './routeChunks'
 import logo from './assets/logo.jpg'
+import workBackground from './assets/work-background.webp'
 
 const SectionPage = lazy(loadSectionPage)
 const ProjectDetailPage = lazy(loadProjectDetailPage)
@@ -329,7 +330,7 @@ export default function App() {
           title={activeNav.label}
           eyebrow={activeNav.eyebrow}
           description={activeNav.description}
-          image={activeNav.image}
+          image={activeNav.path === '/work' ? workBackground : activeNav.image}
           fallback={activeNav.fallback}
           index={activeNavIndex}
           total={NAV_ITEMS.length}
