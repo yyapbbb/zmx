@@ -1,5 +1,5 @@
 import { ArrowLeft, ArrowRight, X } from 'lucide-react'
-import { Suspense, lazy, useEffect, useState } from 'react'
+import { Suspense, lazy, memo, useCallback, useEffect, useState } from 'react'
 import LineSidebar from './LineSidebar'
 import StrataImage from './StrataImage'
 import { LIFE_WALL_ITEMS, LIFE_WALL_THUMBS } from './lifeImages'
@@ -44,6 +44,37 @@ const BLANK_CARD_IMAGE =
 const LANYARD_POSITION: [number, number, number] = [0, 0, 19]
 const LANYARD_GRAVITY: [number, number, number] = [0, -40, 0]
 const LANYARD_OFFSET: [number, number, number] = [-0.35, 0.15, 0]
+
+type LifeWallProps = {
+  paused: boolean
+  onOpen: (title: string) => void
+}
+
+const LifeWall = memo(function LifeWall({ paused, onOpen }: LifeWallProps) {
+  return (
+    <DriftWall
+      items={LIFE_WALL_THUMBS}
+      onTileOpen={(item: { image: string; title: string; href?: string }) => onOpen(item.title)}
+      columns={6}
+      tileWidth={180}
+      tileHeight={120}
+      gap={14}
+      tilt={16}
+      turn={-14}
+      perspective={1200}
+      depth={120}
+      speed={34}
+      direction="up"
+      variance={0.45}
+      parallax={0.5}
+      lift={64}
+      fade={0.6}
+      dim={0.55}
+      overlayColor="#060010"
+      paused={paused}
+    />
+  )
+})
 
 type SectionPageProps = {
   title: string
@@ -99,6 +130,25 @@ export default function SectionPage({
     }
   }, [lineSidebar, accordion])
 
+  const openLifeLightbox = useCallback((title: string) => {
+    const found = LIFE_WALL_ITEMS.findIndex((entry) => entry.title === title)
+    setLightboxIndex(found >= 0 ? found : 0)
+  }, [])
+
+  useEffect(() => {
+    if (lightboxIndex === null) return
+    const total = LIFE_WALL_ITEMS.length
+    if (total === 0) return
+    for (let offset = -1; offset <= 1; offset += 1) {
+      const item = LIFE_WALL_ITEMS[((lightboxIndex + offset) % total + total) % total]
+      if (!item) continue
+      const preloader = new Image()
+      preloader.decoding = 'async'
+      preloader.src = item.image
+      void preloader.decode().catch(() => {})
+    }
+  }, [lightboxIndex])
+
   return (
     <>
     <main className="page-enter relative min-h-screen overflow-hidden bg-[#080908]">
@@ -145,31 +195,7 @@ export default function SectionPage({
       ) : dynamic ? (
         <div className="absolute inset-0 z-0">
           <Suspense fallback={null}>
-            <DriftWall
-              items={LIFE_WALL_THUMBS}
-              onTileOpen={(item: { image: string; title: string; href?: string }) => {
-                const index = LIFE_WALL_ITEMS.findIndex(
-                  (entry) => entry.title === item.title,
-                )
-                setLightboxIndex(index >= 0 ? index : 0)
-              }}
-              columns={6}
-              tileWidth={180}
-              tileHeight={120}
-              gap={14}
-              tilt={16}
-              turn={-14}
-              perspective={1200}
-              depth={120}
-              speed={34}
-              direction="up"
-              variance={0.45}
-              parallax={0.5}
-              lift={64}
-              fade={0.6}
-              dim={0.55}
-              overlayColor="#060010"
-            />
+            <LifeWall paused={lightboxIndex !== null} onOpen={openLifeLightbox} />
           </Suspense>
         </div>
       ) : (
@@ -295,11 +321,13 @@ export default function SectionPage({
                   LIFE_WALL_ITEMS[lightboxIndex].image
                 }
                 alt={LIFE_WALL_ITEMS[lightboxIndex].title}
+                decoding="async"
                 className="max-h-[76vh] max-w-[92vw] rounded-lg object-contain shadow-2xl w-auto h-auto"
               />
               <img
                 src={LIFE_WALL_ITEMS[lightboxIndex].image}
                 alt={LIFE_WALL_ITEMS[lightboxIndex].title}
+                decoding="async"
                 onLoad={(event) => {
                   event.currentTarget.style.opacity = '1'
                 }}

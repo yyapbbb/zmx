@@ -56,6 +56,7 @@ const DriftWall = ({
   variance = 0.45,
   parallax = 0.6,
   pauseOnHover = false,
+  paused = false,
   lift = 64,
   fade = 0.6,
   dim = 0.55,
@@ -215,6 +216,7 @@ const DriftWall = ({
   )
 
   useEffect(() => {
+    if (paused) return
     const animate = (ts) => {
       if (lastTsRef.current === null) lastTsRef.current = ts
       const dt = Math.min(0.05, Math.max(0, ts - lastTsRef.current) / 1000)
@@ -263,7 +265,7 @@ const DriftWall = ({
       rafRef.current = null
       lastTsRef.current = null
     }
-  }, [baseVelocities, columnMeta, pauseOnHover, activeParallax, reduced, applyPlaneTransform])
+  }, [baseVelocities, columnMeta, pauseOnHover, paused, activeParallax, reduced, applyPlaneTransform])
 
   const activate = useCallback((id, index) => {
     activeIdRef.current = id
